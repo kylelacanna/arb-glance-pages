@@ -1,0 +1,72 @@
+# Scan NFL Q-BTS arbs on GitHub-hosted runners and deploy static site to gh-pages.
+# PC / cloudflared tunnel is NOT required for this path.
+name: Scan and deploy Pages
+
+on:
+  schedule:
+    # Every 15 minutes. Free-tier Actions minutes apply; pause or widen cron if needed.
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "scanner.py"
+      - "scripts/**"
+      - ".github/workflows/scan-and-deploy.yml"
+      - "requirements.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  scan-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run scanner → site/data/locks.json
+        env:
+          # Defaults 50/50 are in scripts/scan_to_json.py; override via Actions Variables.
+          ARB_PAGES_POLY_CASH: ${{ vars.ARB_PAGES_POLY_CASH }}
+          ARB_PAGES_FD_CASH: ${{ vars.ARB_PAGES_FD_CASH }}
+        run: |
+          python scripts/scan_to_json.py --out site/data/locks.json --allow-empty
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("site/data/locks.json")
+          d = json.loads(p.read_text(encoding="utf-8"))
+          cov = d.get("coverage") or {}
+          print("coverage:", cov)
+          if d.get("last_error"):
+              print("::warning::Scan reported error:", d["last_error"])
+          if int(cov.get("poly_ok") or 0) == 0 and int(cov.get("fd_ok") or 0) == 0:
+              print("::warning::Both Poly and FD returned 0 ok — GitHub IPs may be blocked. Retry via workflow_dispatch or fall back to local FastAPI / tunnel.")
+          PY
+
+      - name: Deploy to GitHub Pages (gh-pages branch)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: gh-pages
+          force_orphan: true
+          user_name: github-actions[bot]
+          user_email: github-actions[bot]@users.noreply.github.com
+          commit_message: "deploy: refresh locks.json"
