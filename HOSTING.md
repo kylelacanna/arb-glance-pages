@@ -6,7 +6,7 @@ Your PC does **not** need to be on. `cloudflared` tunnel is **optional backup on
 
 Assumes: GitHub account + Cloudflare account with a domain already on Cloudflare DNS.
 
-Suggested hostname: `arb.YOURDOMAIN.com`
+Canonical hostname: `arb.kylelac.com`
 
 ---
 
@@ -28,11 +28,11 @@ git init
 git add .
 git commit -m "Initial GitHub Pages arb glance"
 git branch -M main
-git remote add origin https://github.com/YOUR_USER/arb-glance-pages.git
+git remote add origin https://github.com/kylelacanna/arb-glance-pages.git
 git push -u origin main
 ```
 
-Replace `YOUR_USER` with your GitHub username or org.
+Replace `kylelacanna` with your GitHub username or org.
 
 `gh` CLI is optional — browser + HTTPS remote is fine. If Windows asks for credentials, use a Personal Access Token with `repo` + `workflow` scopes (or GitHub Login via Git Credential Manager).
 
@@ -51,32 +51,32 @@ Replace `YOUR_USER` with your GitHub username or org.
 
 4. After the first green run, open:
    - User site style (if you used a user/org `*.github.io` repo — uncommon here), **or**
-   - Project site: `https://YOUR_USER.github.io/arb-glance-pages/`
+   - Project site: `https://kylelacanna.github.io/arb-glance-pages/`
 
 ---
 
 ## 4. Custom domain on GitHub
 
-1. Repo → **Settings → Pages → Custom domain** → `arb.YOURDOMAIN.com`
+1. Repo → **Settings → Pages → Custom domain** → `arb.kylelac.com`
 2. GitHub will show DNS instructions and may ask for a **TXT** verification record
 3. Enable **Enforce HTTPS** after DNS verifies (can take minutes)
 
 ### Project Pages DNS note
 
-For a **project** site (`YOUR_USER.github.io/arb-glance-pages`), custom domains still CNAME to `YOUR_USER.github.io` (not to the `/arb-glance-pages` path). GitHub routes by Host header + Pages custom domain setting.
+For a **project** site (`kylelacanna.github.io/arb-glance-pages`), custom domains still CNAME to `kylelacanna.github.io` (not to the `/arb-glance-pages` path). GitHub routes by Host header + Pages custom domain setting.
 
 | Type  | Name | Target                 | Proxy (Cloudflare) |
 |-------|------|------------------------|--------------------|
-| CNAME | arb  | `YOUR_USER.github.io`  | Proxied (orange) **or** DNS-only while verifying |
+| CNAME | arb  | `kylelacanna.github.io`  | Proxied (orange) **or** DNS-only while verifying |
 
-Optional apex (`YOURDOMAIN.com`): use A/AAAA records GitHub documents for Pages — prefer a subdomain (`arb`) for simplicity.
+Optional apex (`kylelac.com`): use A/AAAA records GitHub documents for Pages — prefer a subdomain (`arb`) for simplicity.
 
 ### User site vs project site
 
 | Kind | Repo name | Default URL |
 |------|-----------|-------------|
-| User/org site | `YOUR_USER.github.io` | `https://YOUR_USER.github.io/` |
-| Project site (this repo) | `arb-glance-pages` | `https://YOUR_USER.github.io/arb-glance-pages/` |
+| User/org site | `kylelacanna.github.io` | `https://kylelacanna.github.io/` |
+| Project site (this repo) | `arb-glance-pages` | `https://kylelacanna.github.io/arb-glance-pages/` |
 
 This folder is built as a **project site**. Custom domain removes the `/arb-glance-pages` path from the URL users type.
 
@@ -88,7 +88,7 @@ Cloudflare Dashboard → your zone → **DNS → Records**:
 
 | Type  | Name | Content                | Proxy |
 |-------|------|------------------------|-------|
-| CNAME | arb  | `YOUR_USER.github.io`  | Proxied (orange cloud) |
+| CNAME | arb  | `kylelacanna.github.io`  | Proxied (orange cloud) |
 
 Also add any **TXT** verification record GitHub Pages shows (often `_github-pages-challenge-…`).
 
@@ -108,7 +108,7 @@ Without Access, anyone who finds the URL can see the glance (still no booking, b
 
 1. https://one.dash.cloudflare.com/ → **Access → Applications → Add → Self-hosted**
 2. Name: `Arb Glance Pages`
-3. Domain: `arb.YOURDOMAIN.com`
+3. Domain: `arb.kylelac.com`
 4. Identity: One-time PIN (email) and/or Google
 5. Policy **Allow Kyle**: Include → Emails → your address(es)
 6. Save — visit the hostname; Access login should appear before the UI
@@ -158,9 +158,10 @@ If a scan fails, the workflow still deploys the UI shell with `--allow-empty` an
 2. Push `C:\Users\klaca\arb-glance-pages`
 3. Run workflow **Scan and deploy Pages** once
 4. Settings → Pages → branch `gh-pages` / root
-5. Cloudflare DNS: CNAME `arb` → `YOUR_USER.github.io` (proxied)
-6. GitHub Pages custom domain `arb.YOURDOMAIN.com` + HTTPS
+5. Cloudflare DNS: CNAME `arb` → `kylelacanna.github.io` (proxied)
+6. GitHub Pages custom domain `arb.kylelac.com` + HTTPS
 7. Cloudflare Access allowlist your email
-8. Open `https://arb.YOURDOMAIN.com` — badge **PUBLIC · read-only**, no PC required
+8. Open `https://arb.kylelac.com` — badge **PUBLIC · read-only**, no PC required
 
 Do **not** tunnel private dashboard (:8790), `arb-local-agent` (:8787), or Gradio (:7860).
+
