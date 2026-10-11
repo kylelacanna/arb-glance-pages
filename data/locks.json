@@ -1,0 +1,32 @@
+{
+  "ok": true,
+  "public": true,
+  "read_only": true,
+  "hosting": "github-pages",
+  "last_refresh": "2026-10-10 21:43:03 ET",
+  "last_error": null,
+  "scan_duration_sec": 2.09,
+  "sizing_mode_default": "cash_fit",
+  "sort_by_default": "roi",
+  "cash_default": {
+    "poly": 50.0,
+    "fd": 50.0,
+    "dk": 0.0
+  },
+  "scope": "NFL quarter BTS PolyUS<->FD (v1)",
+  "note": "NCAA / tennis / ML / TD totals can be added later.",
+  "coverage": {
+    "rows": 64,
+    "poly_ok": 64,
+    "fd_ok": 0,
+    "raw_locks": 0,
+    "locks_shown": 0,
+    "locks_cash_fit": 0,
+    "locks_max_depth": 0,
+    "games": 16
+  },
+  "locks_cash_fit": [],
+  "locks_max_depth": [],
+  "deep_low_roi": [],
+  "highlights": []
+}
