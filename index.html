@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Arb Glance · PUBLIC read-only</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a222c;
+      --border: #2a3542;
+      --text: #e7eef7;
+      --muted: #8b9bb0;
+      --accent: #3ddc97;
+      --warn: #f5a524;
+      --hot: #2ecc71;
+      --hot-bg: rgba(46, 204, 113, 0.12);
+      --deep: #5b8def;
+      --deep-bg: rgba(91, 141, 239, 0.12);
+      --danger: #ff6b6b;
+      --public: #c9a227;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 20px;
+      font-family: var(--sans);
+      background: var(--bg); color: var(--text);
+      min-height: 100vh;
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 4px; font-weight: 650; }
+    .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em;
+      background: #243041; color: var(--accent); border: 1px solid #334155;
+    }
+    .badge.public {
+      background: rgba(201, 162, 39, 0.18); color: var(--public);
+      border-color: #6b5a22;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 16px; }
+    .panel {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    label { display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+    input[type="number"] {
+      width: 100px; padding: 7px 9px; border-radius: 6px;
+      border: 1px solid var(--border); background: #0d1218; color: var(--text);
+      font-family: var(--mono); font-size: 0.9rem;
+    }
+    button {
+      padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border);
+      background: #243041; color: var(--text); cursor: pointer; font-weight: 600;
+    }
+    button:hover { background: #2d3c50; }
+    button.primary { background: #1e6f4d; border-color: #2a9a6a; }
+    button.primary:hover { background: #248a5f; }
+    button:disabled { opacity: 0.5; cursor: wait; }
+    .meta { color: var(--muted); font-size: 0.8rem; font-family: var(--mono); }
+    .meta strong { color: var(--text); }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    }
+    th, td {
+      text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted); font-weight: 600; font-size: 0.72rem;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      position: sticky; top: 0; background: var(--panel);
+    }
+    td.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+    td.mono { font-family: var(--mono); font-size: 0.8rem; }
+    tr.hot { background: var(--hot-bg); }
+    tr.hot td:first-child { box-shadow: inset 3px 0 0 var(--hot); }
+    tr.deep { background: var(--deep-bg); }
+    .pill {
+      display: inline-block; padding: 1px 7px; border-radius: 4px;
+      font-size: 0.7rem; font-weight: 700; font-family: var(--mono);
+    }
+    .pill.hot { background: var(--hot); color: #062214; }
+    .pill.deep { background: var(--deep); color: #fff; }
+    .pill.thin { background: #5a4630; color: var(--warn); }
+    .pill.ok { background: #243041; color: var(--muted); }
+    .err { color: var(--danger); font-size: 0.85rem; margin: 8px 0; }
+    .section-title {
+      font-size: 0.95rem; margin: 20px 0 8px; font-weight: 650;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .empty { color: var(--muted); padding: 20px; text-align: center; }
+    .mode-toggle {
+      display: inline-flex; border: 1px solid var(--border); border-radius: 8px;
+      overflow: hidden; background: #0d1218;
+    }
+    .mode-toggle button {
+      border: none; border-radius: 0; padding: 8px 14px; background: transparent;
+      color: var(--muted); font-weight: 650; font-size: 0.82rem;
+    }
+    .mode-toggle button.active {
+      background: #1e6f4d; color: #fff;
+    }
+    .mode-toggle button:hover:not(.active) { background: #243041; color: var(--text); }
+    .mode-hint { font-size: 0.75rem; color: var(--muted); margin-left: 8px; }
+    .totals {
+      display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0;
+    }
+    .totals .chip {
+      background: #0d1218; border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px; min-width: 90px;
+    }
+    .totals .chip .lbl { font-size: 0.68rem; color: var(--muted); }
+    .totals .chip .val { font-family: var(--mono); font-size: 1rem; font-weight: 650; }
+    .summary-bar { margin: 10px 0 8px; padding: 10px 12px; }
+    .summary-heading { font-size: 0.8rem; color: var(--muted); font-weight: 650; }
+    .summary-bar .totals { margin: 8px 0 0; }
+    .summary-bar.compact { padding: 8px 12px; }
+    .summary-bar.compact .totals { margin: 0; }
+    .summary-bar.compact .chip { padding: 5px 9px; min-width: 0; }
+    .summary-bar.compact .chip .val { font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <h1>Arb Glance <span class="badge public">PUBLIC · read-only</span></h1>
+  <div class="sub">GitHub Pages glance — no booking · PolyUS &lt;-&gt; FanDuel · NFL quarter BTS · cash prefs are browser-only (scan uses Actions defaults)</div>
+
+  <div class="row">
+    <div class="panel">
+      <label>Poly free $ <span style="opacity:0.7">(local note)</span></label>
+      <input type="number" id="cashPoly" step="0.01" min="0" />
+    </div>
+    <div class="panel">
+      <label>FD free $ <span style="opacity:0.7">(local note)</span></label>
+      <input type="number" id="cashFd" step="0.01" min="0" />
+    </div>
+    <div class="panel">
+      <label>DK free $</label>
+      <input type="number" id="cashDk" step="0.01" min="0" />
+    </div>
+    <button id="btnCash">Save cash (browser)</button>
+    <button class="primary" id="btnRefresh">Reload data</button>
+  </div>
+
+  <div class="row" style="align-items:center;">
+    <div class="panel" style="padding:10px 14px;">
+      <label>Sizing mode</label>
+      <div class="mode-toggle" id="modeToggle">
+        <button type="button" data-mode="cash_fit" id="modeCash" class="active">Cash fit</button>
+        <button type="button" data-mode="max_depth" id="modeDepth">Max depth</button>
+      </div>
+      <span class="mode-hint" id="modeHint">Showing locks that fit free cash · stakes sized to leftover $</span>
+    </div>
+    <div class="panel" style="padding:10px 14px;">
+      <label>Sort by</label>
+      <div class="mode-toggle" id="sortToggle">
+        <button type="button" data-sort="roi" id="sortRoi" class="active">ROI</button>
+        <button type="button" data-sort="profit" id="sortProfit">Profit</button>
+      </div>
+      <span class="mode-hint" id="sortHint">Highest ROI first</span>
+    </div>
+  </div>
+
+  <div class="meta" id="meta">Loading…</div>
+  <div class="err" id="err" hidden></div>
+
+  <div class="summary-bar panel" id="locksSummary" hidden>
+    <div class="summary-heading" id="locksSummaryTitle"></div>
+    <div class="totals" id="locksSummaryTotals"></div>
+  </div>
+
+  <div class="section-title">Top locks <span class="badge" id="lockCount">0</span></div>
+  <div class="panel" style="padding:0; overflow:auto; max-height:60vh;">
+    <table>
+      <thead>
+        <tr>
+          <th>Market</th>
+          <th>Game / kick</th>
+          <th>Side</th>
+          <th>ROI%</th>
+          <th>Profit</th>
+          <th id="thFd">FD$ <span class="pill ok" id="pillFd">cash</span></th>
+          <th id="thPoly">Poly$ <span class="pill ok" id="pillPoly">cash</span></th>
+          <th>Depth</th>
+          <th>Cash need</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>No locks yet — waiting for first Actions scan…</div>
+  </div>
+
+  <div class="section-title">Deep / low-ROI notables <span class="badge" id="deepCount">0</span></div>
+  <div class="panel" style="padding:0; overflow:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Market</th>
+          <th>Game / kick</th>
+          <th>Side</th>
+          <th>ROI%</th>
+          <th>Profit @cash</th>
+          <th>Depth $ (ideal)</th>
+          <th>Depth</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyDeep"></tbody>
+    </table>
+    <div class="empty" id="emptyDeep">None right now</div>
+  </div>
+
+  <p class="sub" style="margin-top:18px;">
+    <strong>Read-only public glance (GitHub Pages).</strong> No Take Poly, no FD hedge modal, no order placement.
+    Stakes come from the last Actions scan (default cash in JSON). Cash fields here are a local reminder only — they do not re-size until the next scan.
+    HOT = ROI ≥ 8% and profit ≥ $2.
+  </p>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const DATA_URL = "data/locks.json";
+    const POLL_MS = 60000; // Pages data refreshes ~every 15m via Actions
+    const LS_MODE = "arb_pages_sizing_mode";
+    const LS_SORT = "arb_pages_sort_by";
+    const LS_CASH = "arb_pages_cash";
+
+    let sizingMode = localStorage.getItem(LS_MODE) || "cash_fit";
+    let sortBy = localStorage.getItem(LS_SORT) || "roi";
+    let payload = null;
+    let currentLocks = [];
+    let currentDeep = [];
+
+    function fmt(n, d=2) {
+      if (n == null || Number.isNaN(n)) return "—";
+      return Number(n).toFixed(d);
+    }
+
+    function depthPill(flag) {
+      if (flag === "DEEP") return '<span class="pill deep">DEEP</span>';
+      if (flag === "THIN") return '<span class="pill thin">THIN</span>';
+      return '<span class="pill ok">OK</span>';
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[c]));
+    }
+
+    function setModeUI(mode) {
+      sizingMode = mode === "max_depth" ? "max_depth" : "cash_fit";
+      const cash = sizingMode === "cash_fit";
+      $("modeCash").classList.toggle("active", cash);
+      $("modeDepth").classList.toggle("active", !cash);
+      $("modeHint").textContent = cash
+        ? "Showing locks that fit free cash · stakes sized to leftover $"
+        : "Showing all true locks · stakes = max book depth (cash needed shown)";
+      const pill = cash ? "cash" : "depth";
+      const pillCls = cash ? "ok" : "deep";
+      $("pillFd").textContent = pill;
+      $("pillPoly").textContent = pill;
+      $("pillFd").className = "pill " + pillCls;
+      $("pillPoly").className = "pill " + pillCls;
+    }
+
+    function normalizeSort(value) {
+      return value === "profit" ? "profit" : "roi";
+    }
+
+    function setSortUI(value) {
+      sortBy = normalizeSort(value);
+      $("sortRoi").classList.toggle("active", sortBy === "roi");
+      $("sortProfit").classList.toggle("active", sortBy === "profit");
+      $("sortHint").textContent = sortBy === "roi"
+        ? "Highest ROI first"
+        : "Biggest locked $ first";
+    }
+
+    function sortLocks(rows) {
+      const sorted = Array.isArray(rows) ? rows.slice() : [];
+      const primary = sortBy === "profit" ? "profit" : "roi_pct";
+      const secondary = sortBy === "profit" ? "roi_pct" : "profit";
+      const num = (row, key) => {
+        const n = Number(row && row[key]);
+        return Number.isFinite(n) ? n : 0;
+      };
+      sorted.sort((a, b) =>
+        (num(b, primary) - num(a, primary)) ||
+        (num(b, secondary) - num(a, secondary))
+      );
+      return sorted;
+    }
+
+    function gameLabel(L) {
+      return L.game_label || [L.game, L.q != null ? ("Q" + L.q) : "", L.kick].filter(Boolean).join(" · ") || "—";
+    }
+
+    function locksForMode() {
+      if (!payload) return [];
+      if (sizingMode === "max_depth") return payload.locks_max_depth || [];
+      return payload.locks_cash_fit || [];
+    }
+
+    function applyView() {
+      currentLocks = locksForMode();
+      currentDeep = (payload && payload.deep_low_roi) || [];
+      renderLocks(sortLocks(currentLocks));
+      renderDeep(sortLocks(currentDeep));
+    }
+
+    function renderLocks(locks) {
+      const tb = $("tbody");
+      tb.innerHTML = "";
+      $("lockCount").textContent = String(locks.length);
+      $("empty").hidden = locks.length > 0;
+
+      const summary = $("locksSummary");
+      const summaryTitle = $("locksSummaryTitle");
+      const summaryTotals = $("locksSummaryTotals");
+      const valueOrFallback = (row, preferred, fallback) => {
+        const value = Number(row && row[preferred]);
+        if (Number.isFinite(value)) return value;
+        const fallbackValue = Number(row && row[fallback]);
+        return Number.isFinite(fallbackValue) ? fallbackValue : 0;
+      };
+      const totalProfit = locks.reduce((sum, row) => {
+        const value = Number(row && row.profit);
+        return sum + (Number.isFinite(value) ? value : 0);
+      }, 0);
+      if (sizingMode === "max_depth") {
+        const polyNeeded = locks.reduce(
+          (sum, row) => sum + valueOrFallback(row, "cash_needed_poly", "poly_stake"), 0
+        );
+        const fdNeeded = locks.reduce(
+          (sum, row) => sum + valueOrFallback(row, "cash_needed_fd", "fd_stake"), 0
+        );
+        const totalCash = polyNeeded + fdNeeded;
+        const packageRoi = totalCash > 0 ? (100.0 * totalProfit / totalCash) : 0;
+        summary.hidden = false;
+        summary.classList.remove("compact");
+        summaryTitle.textContent = "Max depth package · If you took all shown at depth";
+        summaryTotals.innerHTML = `
+          <div class="chip"><div class="lbl">${locks.length} locks · Total profit available</div><div class="val">$${fmt(totalProfit)}</div></div>
+          <div class="chip"><div class="lbl">Package ROI</div><div class="val">${fmt(packageRoi)}%</div></div>
+          <div class="chip"><div class="lbl">Total cash needed</div><div class="val">$${fmt(totalCash)}</div></div>
+          <div class="chip"><div class="lbl">Poly $ needed</div><div class="val">$${fmt(polyNeeded)}</div></div>
+          <div class="chip"><div class="lbl">FD $ needed</div><div class="val">$${fmt(fdNeeded)}</div></div>
+        `;
+      } else {
+        summary.hidden = false;
+        summary.classList.add("compact");
+        summaryTitle.textContent = "Cash-fit package";
+        summaryTotals.innerHTML = `
+          <div class="chip"><div class="val">${locks.length} locks · total profit $${fmt(totalProfit)} · fits scan cash</div></div>
+        `;
+      }
+
+      locks.forEach((L) => {
+        const tr = document.createElement("tr");
+        if (L.highlight) tr.classList.add("hot");
+        else if (L.deep_low_roi) tr.classList.add("deep");
+        const badges = [];
+        if (L.highlight) badges.push('<span class="pill hot">HOT</span>');
+        if (L.deep_low_roi) badges.push('<span class="pill deep">DEPTH$</span>');
+        if (L.pegged) badges.push('<span class="pill thin">PEG</span>');
+        const modePill = sizingMode === "max_depth"
+          ? '<span class="pill deep">DEPTH</span>'
+          : '<span class="pill ok">CASH</span>';
+        const need = (sizingMode === "max_depth")
+          ? `P$${fmt(L.cash_needed_poly)} / F$${fmt(L.cash_needed_fd, 2)}`
+          : (L.fits_cash ? "fits" : "—");
+        const fdDec = Number.isInteger(Number(L.fd_stake)) ? 0 : 2;
+        tr.innerHTML = `
+          <td>${escapeHtml(L.market || "")} ${badges.join(" ")} ${modePill}</td>
+          <td class="mono">${escapeHtml(gameLabel(L))}</td>
+          <td class="mono">${escapeHtml(L.side || "")}</td>
+          <td class="num"><strong>${fmt(L.roi_pct)}</strong></td>
+          <td class="num">$${fmt(L.profit)}</td>
+          <td class="num">$${fmt(L.fd_stake, fdDec)}</td>
+          <td class="num">$${fmt(L.poly_stake)}</td>
+          <td class="num">${fmt(L.depth, 1)} ${depthPill(L.depth_flag)}</td>
+          <td class="num mono" style="font-size:0.75rem">${need}</td>
+        `;
+        tb.appendChild(tr);
+      });
+    }
+
+    function renderDeep(rows) {
+      const tb = $("tbodyDeep");
+      tb.innerHTML = "";
+      $("deepCount").textContent = String(rows.length);
+      $("emptyDeep").hidden = rows.length > 0;
+      $("emptyDeep").style.display = rows.length ? "none" : "block";
+      for (const L of rows) {
+        const tr = document.createElement("tr");
+        tr.classList.add("deep");
+        tr.innerHTML = `
+          <td>${escapeHtml(L.market || "")}</td>
+          <td class="mono">${escapeHtml(gameLabel(L))}</td>
+          <td class="mono">${escapeHtml(L.side || "")}</td>
+          <td class="num">${fmt(L.roi_pct)}</td>
+          <td class="num">$${fmt(L.profit)}</td>
+          <td class="num">$${fmt(L.depth_profit_ideal)} @ ${fmt(L.depth_roi_pct)}%</td>
+          <td class="num">${fmt(L.depth, 1)}</td>
+        `;
+        tb.appendChild(tr);
+      }
+    }
+
+    function loadCashInputs(d) {
+      let local = null;
+      try { local = JSON.parse(localStorage.getItem(LS_CASH) || "null"); } catch (_) {}
+      const def = (d && d.cash_default) || {};
+      const src = local || def;
+      $("cashPoly").value = src.poly ?? def.poly ?? "";
+      $("cashFd").value = src.fd ?? def.fd ?? "";
+      $("cashDk").value = src.dk ?? def.dk ?? 0;
+    }
+
+    async function load() {
+      try {
+        const bust = DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "_=" + Date.now();
+        const r = await fetch(bust, { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const d = await r.json();
+        payload = d;
+        loadCashInputs(d);
+        if (d.sizing_mode_default && !localStorage.getItem(LS_MODE)) {
+          setModeUI(d.sizing_mode_default);
+        } else {
+          setModeUI(sizingMode);
+        }
+        if ((d.sort_by_default === "roi" || d.sort_by_default === "profit") && !localStorage.getItem(LS_SORT)) {
+          setSortUI(d.sort_by_default);
+        } else {
+          setSortUI(sortBy);
+        }
+        const cov = d.coverage || {};
+        const cashDef = d.cash_default || {};
+        $("meta").innerHTML =
+          `Last refresh: <strong>${d.last_refresh || "—"}</strong>` +
+          ` · hosting <strong>${d.hosting || "pages"}</strong>` +
+          ` · mode <strong>${sizingMode}</strong>` +
+          ` · sort <strong>${sortBy.toUpperCase()}</strong>` +
+          ` · scan ${d.scan_duration_sec != null ? d.scan_duration_sec + "s" : "—"}` +
+          ` · scan cash P$${cashDef.poly ?? "—"} / F$${cashDef.fd ?? "—"}` +
+          ` · coverage rows ${cov.rows ?? "—"} poly_ok ${cov.poly_ok ?? "—"} fd_ok ${cov.fd_ok ?? "—"} locks ${cov.raw_locks ?? "—"}` +
+          ` · cash_fit ${cov.locks_cash_fit ?? "—"} / depth ${cov.locks_max_depth ?? "—"}` +
+          (d.scope ? ` · ${escapeHtml(d.scope)}` : "");
+        if (d.last_error) {
+          $("err").hidden = false;
+          $("err").textContent = "Last scan error: " + d.last_error;
+        } else {
+          $("err").hidden = true;
+        }
+        applyView();
+      } catch (e) {
+        $("err").hidden = false;
+        $("err").textContent = "Fetch failed: " + e;
+      }
+    }
+
+    $("btnCash").onclick = () => {
+      const body = {
+        poly: parseFloat($("cashPoly").value),
+        fd: parseFloat($("cashFd").value),
+        dk: parseFloat($("cashDk").value),
+      };
+      localStorage.setItem(LS_CASH, JSON.stringify(body));
+      $("err").hidden = false;
+      $("err").style.color = "var(--accent)";
+      $("err").textContent = "Saved cash note in this browser. Stakes still reflect Actions scan defaults until the next scan.";
+      setTimeout(() => { $("err").hidden = true; $("err").style.color = ""; }, 4000);
+    };
+
+    $("btnRefresh").onclick = async () => {
+      $("btnRefresh").disabled = true;
+      await load();
+      $("btnRefresh").disabled = false;
+    };
+
+    function setSizingMode(mode) {
+      setModeUI(mode);
+      localStorage.setItem(LS_MODE, sizingMode);
+      applyView();
+      if (payload) {
+        const cov = payload.coverage || {};
+        const cashDef = payload.cash_default || {};
+        $("meta").innerHTML =
+          `Last refresh: <strong>${payload.last_refresh || "—"}</strong>` +
+          ` · hosting <strong>${payload.hosting || "pages"}</strong>` +
+          ` · mode <strong>${sizingMode}</strong>` +
+          ` · sort <strong>${sortBy.toUpperCase()}</strong>` +
+          ` · scan ${payload.scan_duration_sec != null ? payload.scan_duration_sec + "s" : "—"}` +
+          ` · scan cash P$${cashDef.poly ?? "—"} / F$${cashDef.fd ?? "—"}` +
+          ` · coverage rows ${cov.rows ?? "—"} poly_ok ${cov.poly_ok ?? "—"} fd_ok ${cov.fd_ok ?? "—"} locks ${cov.raw_locks ?? "—"}` +
+          ` · cash_fit ${cov.locks_cash_fit ?? "—"} / depth ${cov.locks_max_depth ?? "—"}` +
+          (payload.scope ? ` · ${escapeHtml(payload.scope)}` : "");
+      }
+    }
+    $("modeCash").onclick = () => setSizingMode("cash_fit");
+    $("modeDepth").onclick = () => setSizingMode("max_depth");
+    setModeUI(sizingMode);
+
+    function setSortBy(value) {
+      setSortUI(value);
+      localStorage.setItem(LS_SORT, sortBy);
+      applyView();
+    }
+    $("sortRoi").onclick = () => setSortBy("roi");
+    $("sortProfit").onclick = () => setSortBy("profit");
+    setSortUI(sortBy);
+
+    load();
+    setInterval(load, POLL_MS);
+  </script>
+</body>
+</html>
